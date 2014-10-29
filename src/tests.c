@@ -225,11 +225,9 @@ void run_num_smalltests() {
 
 int secp256k1_scalar_eq(const secp256k1_scalar_t *s1, const secp256k1_scalar_t *s2) {
     secp256k1_scalar_t t;
-    secp256k1_scalar_init(&t);
     secp256k1_scalar_negate(&t, s2);
     secp256k1_scalar_add(&t, &t, s1);
     int ret = secp256k1_scalar_is_zero(&t);
-    secp256k1_scalar_free(&t);
     return ret;
 }
 
@@ -239,7 +237,6 @@ void scalar_test(void) {
     // Set 's' to a random scalar, with value 'snum'.
     secp256k1_rand256_test(c);
     secp256k1_scalar_t s;
-    secp256k1_scalar_init(&s);
     secp256k1_scalar_set_b32(&s, c, NULL);
     secp256k1_num_t snum;
     secp256k1_num_init(&snum);
@@ -249,7 +246,6 @@ void scalar_test(void) {
     // Set 's1' to a random scalar, with value 's1num'.
     secp256k1_rand256_test(c);
     secp256k1_scalar_t s1;
-    secp256k1_scalar_init(&s1);
     secp256k1_scalar_set_b32(&s1, c, NULL);
     secp256k1_num_t s1num;
     secp256k1_num_init(&s1num);
@@ -259,7 +255,6 @@ void scalar_test(void) {
     // Set 's2' to a random scalar, with value 'snum2', and byte array representation 'c'.
     secp256k1_rand256_test(c);
     secp256k1_scalar_t s2;
-    secp256k1_scalar_init(&s2);
     int overflow = 0;
     secp256k1_scalar_set_b32(&s2, c, &overflow);
     secp256k1_num_t s2num;
@@ -304,7 +299,6 @@ void scalar_test(void) {
         secp256k1_num_add(&rnum, &snum, &s2num);
         secp256k1_num_mod(&rnum, &secp256k1_ge_consts->order);
         secp256k1_scalar_t r;
-        secp256k1_scalar_init(&r);
         secp256k1_scalar_add(&r, &s, &s2);
         secp256k1_num_t r2num;
         secp256k1_num_init(&r2num);
@@ -312,7 +306,6 @@ void scalar_test(void) {
         CHECK(secp256k1_num_eq(&rnum, &r2num));
         secp256k1_num_free(&r2num);
         secp256k1_num_free(&rnum);
-        secp256k1_scalar_free(&r);
     }
 
     {
@@ -322,7 +315,6 @@ void scalar_test(void) {
         secp256k1_num_mul(&rnum, &snum, &s2num);
         secp256k1_num_mod(&rnum, &secp256k1_ge_consts->order);
         secp256k1_scalar_t r;
-        secp256k1_scalar_init(&r);
         secp256k1_scalar_mul(&r, &s, &s2);
         secp256k1_num_t r2num;
         secp256k1_num_init(&r2num);
@@ -335,7 +327,6 @@ void scalar_test(void) {
         CHECK(secp256k1_num_eq(&rnum, &s2num) == (secp256k1_scalar_is_zero(&s2) || secp256k1_scalar_is_one(&s)));
         secp256k1_num_free(&r2num);
         secp256k1_num_free(&rnum);
-        secp256k1_scalar_free(&r);
     }
 
     {
@@ -344,7 +335,6 @@ void scalar_test(void) {
         // Check that comparison with the half order is equal to testing for high scalar.
         CHECK(secp256k1_scalar_is_high(&s) == (secp256k1_num_cmp(&snum, &secp256k1_ge_consts->half_order) > 0));
         secp256k1_scalar_t neg;
-        secp256k1_scalar_init(&neg);
         secp256k1_scalar_negate(&neg, &s);
         secp256k1_num_t negnum;
         secp256k1_num_init(&negnum);
@@ -367,14 +357,12 @@ void scalar_test(void) {
         CHECK(secp256k1_scalar_is_zero(&neg));
         secp256k1_num_free(&negnum);
         secp256k1_num_free(&negnum2);
-        secp256k1_scalar_free(&neg);
     }
 
     {
         // Test that scalar inverses are equal to the inverse of their number modulo the order.
         if (!secp256k1_scalar_is_zero(&s)) {
             secp256k1_scalar_t inv;
-            secp256k1_scalar_init(&inv);
             secp256k1_scalar_inverse(&inv, &s);
             secp256k1_num_t invnum;
             secp256k1_num_init(&invnum);
@@ -391,85 +379,67 @@ void scalar_test(void) {
             CHECK(secp256k1_scalar_is_one(&inv));
             secp256k1_num_free(&invnum);
             secp256k1_num_free(&invnum2);
-            secp256k1_scalar_free(&inv);
         }
     }
 
     {
         // Test commutativity of add.
         secp256k1_scalar_t r1, r2;
-        secp256k1_scalar_init(&r1);
-        secp256k1_scalar_init(&r2);
         secp256k1_scalar_add(&r1, &s1, &s2);
         secp256k1_scalar_add(&r2, &s2, &s1);
         CHECK(secp256k1_scalar_eq(&r1, &r2));
-        secp256k1_scalar_free(&r1);
-        secp256k1_scalar_free(&r2);
     }
 
     {
         // Test commutativity of mul.
         secp256k1_scalar_t r1, r2;
-        secp256k1_scalar_init(&r1);
-        secp256k1_scalar_init(&r2);
         secp256k1_scalar_mul(&r1, &s1, &s2);
         secp256k1_scalar_mul(&r2, &s2, &s1);
         CHECK(secp256k1_scalar_eq(&r1, &r2));
-        secp256k1_scalar_free(&r1);
-        secp256k1_scalar_free(&r2);
     }
 
     {
         // Test associativity of add.
         secp256k1_scalar_t r1, r2;
-        secp256k1_scalar_init(&r1);
-        secp256k1_scalar_init(&r2);
         secp256k1_scalar_add(&r1, &s1, &s2);
         secp256k1_scalar_add(&r1, &r1, &s);
         secp256k1_scalar_add(&r2, &s2, &s);
         secp256k1_scalar_add(&r2, &s1, &r2);
         CHECK(secp256k1_scalar_eq(&r1, &r2));
-        secp256k1_scalar_free(&r1);
-        secp256k1_scalar_free(&r2);
     }
 
     {
         // Test associativity of mul.
         secp256k1_scalar_t r1, r2;
-        secp256k1_scalar_init(&r1);
-        secp256k1_scalar_init(&r2);
         secp256k1_scalar_mul(&r1, &s1, &s2);
         secp256k1_scalar_mul(&r1, &r1, &s);
         secp256k1_scalar_mul(&r2, &s2, &s);
         secp256k1_scalar_mul(&r2, &s1, &r2);
         CHECK(secp256k1_scalar_eq(&r1, &r2));
-        secp256k1_scalar_free(&r1);
-        secp256k1_scalar_free(&r2);
     }
 
     {
         // Test distributitivity of mul over add.
         secp256k1_scalar_t r1, r2, t;
-        secp256k1_scalar_init(&r1);
-        secp256k1_scalar_init(&r2);
-        secp256k1_scalar_init(&t);
         secp256k1_scalar_add(&r1, &s1, &s2);
         secp256k1_scalar_mul(&r1, &r1, &s);
         secp256k1_scalar_mul(&r2, &s1, &s);
         secp256k1_scalar_mul(&t, &s2, &s);
         secp256k1_scalar_add(&r2, &r2, &t);
         CHECK(secp256k1_scalar_eq(&r1, &r2));
-        secp256k1_scalar_free(&r1);
-        secp256k1_scalar_free(&r2);
-        secp256k1_scalar_free(&t);
+    }
+
+    {
+        // Test square.
+        secp256k1_scalar_t r1, r2;
+        secp256k1_scalar_sqr(&r1, &s1);
+        secp256k1_scalar_mul(&r2, &s1, &s1);
+        CHECK(secp256k1_scalar_eq(&r1, &r2));
     }
 
     secp256k1_num_free(&snum);
-    secp256k1_scalar_free(&s);
     secp256k1_num_free(&s1num);
-    secp256k1_scalar_free(&s1);
     secp256k1_num_free(&s2num);
-    secp256k1_scalar_free(&s2);
 }
 
 void run_scalar_tests(void) {
@@ -778,19 +748,15 @@ void run_wnaf() {
 
 void random_sign(secp256k1_ecdsa_sig_t *sig, const secp256k1_scalar_t *key, const secp256k1_scalar_t *msg, int *recid) {
     secp256k1_scalar_t nonce;
-    secp256k1_scalar_init(&nonce);
     do {
         random_scalar_order_test(&nonce);
     } while(!secp256k1_ecdsa_sig_sign(sig, key, msg, &nonce, recid));
-    secp256k1_scalar_free(&nonce);
 }
 
 void test_ecdsa_sign_verify() {
     const secp256k1_ge_consts_t *c = secp256k1_ge_consts;
     secp256k1_scalar_t msg, key;
-    secp256k1_scalar_init(&msg);
     random_scalar_order_test(&msg);
-    secp256k1_scalar_init(&key);
     random_scalar_order_test(&key);
     secp256k1_gej_t pubj; secp256k1_ecmult_gen(&pubj, &key);
     secp256k1_ge_t pub; secp256k1_ge_set_gej(&pub, &pubj);
@@ -805,8 +771,6 @@ void test_ecdsa_sign_verify() {
     CHECK(!secp256k1_ecdsa_sig_verify(&sig, &pub, &msg_num));
     secp256k1_ecdsa_sig_free(&sig);
     secp256k1_num_free(&msg_num);
-    secp256k1_scalar_free(&msg);
-    secp256k1_scalar_free(&key);
 }
 
 void run_ecdsa_sign_verify() {
@@ -931,11 +895,9 @@ EC_KEY *get_openssl_key(const secp256k1_scalar_t *key) {
 void test_ecdsa_openssl() {
     const secp256k1_ge_consts_t *c = secp256k1_ge_consts;
     secp256k1_scalar_t key, msg;
-    secp256k1_scalar_init(&msg);
     unsigned char message[32];
     secp256k1_rand256_test(message);
     secp256k1_scalar_set_b32(&msg, message, NULL);
-    secp256k1_scalar_init(&key);
     random_scalar_order_test(&key);
     secp256k1_gej_t qj;
     secp256k1_ecmult_gen(&qj, &key);
@@ -964,8 +926,6 @@ void test_ecdsa_openssl() {
 
     secp256k1_ecdsa_sig_free(&sig);
     EC_KEY_free(ec_key);
-    secp256k1_scalar_free(&key);
-    secp256k1_scalar_free(&msg);
 }
 
 void run_ecdsa_openssl() {

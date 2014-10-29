@@ -158,20 +158,16 @@ int static secp256k1_ecdsa_sig_sign(secp256k1_ecdsa_sig_t *sig, const secp256k1_
     secp256k1_fe_get_b32(b, &r.x);
     int overflow = 0;
     secp256k1_scalar_t sigr;
-    secp256k1_scalar_init(&sigr);
     secp256k1_scalar_set_b32(&sigr, b, &overflow);
     if (recid)
         *recid = (overflow ? 2 : 0) | (secp256k1_fe_is_odd(&r.y) ? 1 : 0);
     secp256k1_scalar_t n;
-    secp256k1_scalar_init(&n);
     secp256k1_scalar_mul(&n, &sigr, seckey);
     secp256k1_scalar_add(&n, &n, message);
     secp256k1_scalar_t sigs;
-    secp256k1_scalar_init(&sigs);
     secp256k1_scalar_inverse(&sigs, nonce);
     secp256k1_scalar_mul(&sigs, &sigs, &n);
     secp256k1_scalar_clear(&n);
-    secp256k1_scalar_free(&n);
     secp256k1_gej_clear(&rp);
     secp256k1_ge_clear(&r);
     if (secp256k1_scalar_is_zero(&sigs))
@@ -183,8 +179,6 @@ int static secp256k1_ecdsa_sig_sign(secp256k1_ecdsa_sig_t *sig, const secp256k1_
     }
     secp256k1_scalar_get_num(&sig->s, &sigs);
     secp256k1_scalar_get_num(&sig->r, &sigr);
-    secp256k1_scalar_free(&sigs);
-    secp256k1_scalar_free(&sigr);
     return 1;
 }
 
