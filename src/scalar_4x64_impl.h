@@ -129,6 +129,13 @@ int static secp256k1_scalar_is_high(const secp256k1_scalar_t *a) {
     (o) += ((c) < t); \
 }
 
+#define muladd_fast(a,b) { \
+    uint128_t t = (uint128_t)(a) * (b); \
+    (c) += t; \
+    VERIFY_CHECK((c) >= t); \
+    VERIFY_CHECK((o) == 0); \
+}
+
 #define muladd2(a,b) { \
     uint128_t t = (uint128_t)(a) * (b); \
     (c) += t; \
@@ -142,10 +149,22 @@ int static secp256k1_scalar_is_high(const secp256k1_scalar_t *a) {
     (o) += ((c) < (x)); \
 }
 
+#define sumadd_fast(x) { \
+    (c) += (x); \
+    VERIFY_CHECK((c) >= (x)); \
+    VERIFY_CHECK((o) == 0); \
+}
+
 #define extract(n) { \
     (n) = (c) & 0xFFFFFFFFFFFFFFFFULL; \
     (c) = ((c) >> 64) | ((uint128_t)o << 64); \
     (o) = 0; \
+}
+
+#define extract_fast(n) { \
+    VERIFY_CHECK((o) == 0); \
+    (n) = (c) & 0xFFFFFFFFFFFFFFFFULL; \
+    (c) = (c) >> 64; \
 }
 
 void static secp256k1_scalar_reduce_512(secp256k1_scalar_t *r, const uint64_t *l) {
@@ -159,9 +178,9 @@ void static secp256k1_scalar_reduce_512(secp256k1_scalar_t *r, const uint64_t *l
     // m[0..6] = l[0..3] + n[0..3] * SECP256K1_N_C.
     c = l[0];
     o = 0;
-    muladd(n0, SECP256K1_N_C_0);
-    uint64_t m0; extract(m0);
-    sumadd(l[1]);
+    muladd_fast(n0, SECP256K1_N_C_0);
+    uint64_t m0; extract_fast(m0);
+    sumadd_fast(l[1]);
     muladd(n1, SECP256K1_N_C_0);
     muladd(n0, SECP256K1_N_C_1);
     uint64_t m1; extract(m1);
@@ -178,17 +197,17 @@ void static secp256k1_scalar_reduce_512(secp256k1_scalar_t *r, const uint64_t *l
     muladd(n3, SECP256K1_N_C_1);
     sumadd(n2);
     uint64_t m4; extract(m4);
-    sumadd(n3);
-    uint64_t m5; extract(m5);
+    sumadd_fast(n3);
+    uint64_t m5; extract_fast(m5);
     VERIFY_CHECK(c <= 1);
     uint32_t m6 = c;
 
     // Reduce 385 bits into 258.
     // p[0..4] = m[0..3] + m[4..6] * SECP256K1_N_C.
     c = m0; o = 0;
-    muladd(m4, SECP256K1_N_C_0);
-    uint64_t p0; extract(p0);
-    sumadd(m1);
+    muladd_fast(m4, SECP256K1_N_C_0);
+    uint64_t p0; extract_fast(p0);
+    sumadd_fast(m1);
     muladd(m5, SECP256K1_N_C_0);
     muladd(m4, SECP256K1_N_C_1);
     uint64_t p1; extract(p1);
@@ -197,10 +216,10 @@ void static secp256k1_scalar_reduce_512(secp256k1_scalar_t *r, const uint64_t *l
     muladd(m5, SECP256K1_N_C_1);
     sumadd(m4);
     uint64_t p2; extract(p2);
-    sumadd(m3);
-    muladd(m6, SECP256K1_N_C_1);
-    sumadd(m5);
-    uint64_t p3; extract(p3);
+    sumadd_fast(m3);
+    muladd_fast(m6, SECP256K1_N_C_1);
+    sumadd_fast(m5);
+    uint64_t p3; extract_fast(p3);
     uint32_t p4 = c + m6;
     VERIFY_CHECK(p4 <= 2);
 
@@ -227,8 +246,8 @@ void static secp256k1_scalar_mul(secp256k1_scalar_t *r, const secp256k1_scalar_t
     uint64_t l[8];
 
     // l[0..7] = a[0..3] * b[0..3].
-    muladd(a->d[0], b->d[0]);
-    extract(l[0]);
+    muladd_fast(a->d[0], b->d[0]);
+    extract_fast(l[0]);
     muladd(a->d[0], b->d[1]);
     muladd(a->d[1], b->d[0]);
     extract(l[1]);
@@ -248,8 +267,8 @@ void static secp256k1_scalar_mul(secp256k1_scalar_t *r, const secp256k1_scalar_t
     muladd(a->d[2], b->d[3]);
     muladd(a->d[3], b->d[2]);
     extract(l[5]);
-    muladd(a->d[3], b->d[3]);
-    extract(l[6]);
+    muladd_fast(a->d[3], b->d[3]);
+    extract_fast(l[6]);
     VERIFY_CHECK(c <= 0xFFFFFFFFFFFFFFFFULL);
     l[7] = c;
 
@@ -264,8 +283,8 @@ void static secp256k1_scalar_sqr(secp256k1_scalar_t *r, const secp256k1_scalar_t
     uint64_t l[16];
 
     // l[0..7] = a[0..3] * b[0..3].
-    muladd(a->d[0], a->d[0]);
-    extract(l[0]);
+    muladd_fast(a->d[0], a->d[0]);
+    extract_fast(l[0]);
     muladd2(a->d[0], a->d[1]);
     extract(l[1]);
     muladd2(a->d[0], a->d[2]);
@@ -279,12 +298,18 @@ void static secp256k1_scalar_sqr(secp256k1_scalar_t *r, const secp256k1_scalar_t
     extract(l[4]);
     muladd2(a->d[2], a->d[3]);
     extract(l[5]);
-    muladd(a->d[3], a->d[3]);
-    extract(l[6]);
+    muladd_fast(a->d[3], a->d[3]);
+    extract_fast(l[6]);
     VERIFY_CHECK(c <= 0xFFFFFFFFFFFFFFFFULL);
     l[7] = c;
 
     secp256k1_scalar_reduce_512(r, l);
 }
+
+#undef muladd
+#undef muladd_fast
+#undef muladd2
+#undef extract
+#undef extract_fast
 
 #endif
