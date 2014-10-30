@@ -5,6 +5,8 @@
 #ifndef _SECP256K1_SCALAR_REPR_IMPL_H_
 #define _SECP256K1_SCALAR_REPR_IMPL_H_
 
+#include "util.h"
+
 typedef unsigned __int128 uint128_t;
 
 // Limbs of the secp256k1 order.
