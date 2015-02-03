@@ -38,6 +38,8 @@ noinst_HEADERS += src/hash_impl.h
 noinst_HEADERS += src/field.h
 noinst_HEADERS += src/field_impl.h
 noinst_HEADERS += src/bench.h
+noinst_HEADERS += src/schnorr.h
+noinst_HEADERS += src/schnorr_impl.h
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = libsecp256k1.pc
@@ -49,10 +51,13 @@ libsecp256k1_la_LIBADD = $(SECP_LIBS)
 
 noinst_PROGRAMS =
 if USE_BENCHMARK
-noinst_PROGRAMS += bench_verify bench_recover bench_sign bench_internal
+noinst_PROGRAMS += bench_verify bench_recover bench_sign bench_internal bench_schnorr_verify
 bench_verify_SOURCES = src/bench_verify.c
 bench_verify_LDADD = libsecp256k1.la $(SECP_LIBS)
 bench_verify_LDFLAGS = -static
+bench_schnorr_verify_SOURCES = src/bench_schnorr_verify.c
+bench_schnorr_verify_LDADD = libsecp256k1.la $(SECP_LIBS)
+bench_schnorr_verify_LDFLAGS = -static
 bench_recover_SOURCES = src/bench_recover.c
 bench_recover_LDADD = libsecp256k1.la $(SECP_LIBS)
 bench_recover_LDFLAGS = -static
