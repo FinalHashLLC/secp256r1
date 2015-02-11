@@ -31,6 +31,16 @@ typedef struct {
 #define SECP256K1_GEJ_CONST(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p) {SECP256K1_FE_CONST((a),(b),(c),(d),(e),(f),(g),(h)), SECP256K1_FE_CONST((i),(j),(k),(l),(m),(n),(o),(p)), SECP256K1_FE_CONST(0, 0, 0, 0, 0, 0, 0, 1), 0}
 #define SECP256K1_GEJ_CONST_INFINITY {SECP256K1_FE_CONST(0, 0, 0, 0, 0, 0, 0, 0), SECP256K1_FE_CONST(0, 0, 0, 0, 0, 0, 0, 0), SECP256K1_FE_CONST(0, 0, 0, 0, 0, 0, 0, 0), 1}
 
+#ifdef USE_COZ
+/** A group element of the secp256k1 curve, with an implicit z coordinate (and infinity flag).
+ *  An instance of secp256k1_coz_t is always "co-z" with some instance of secp256k1_gej_t, from
+ *  which it inherits its implied z coordinate and infinity flag. */
+typedef struct {
+    secp256k1_fe_t x; /* actual X: x/z^2 (z implied) */
+    secp256k1_fe_t y; /* actual Y: y/z^3 (z implied) */
+} secp256k1_coz_t;
+#endif
+
 typedef struct {
     secp256k1_fe_storage_t x;
     secp256k1_fe_storage_t y;
@@ -131,5 +141,15 @@ static void secp256k1_ge_storage_cmov(secp256k1_ge_storage_t *r, const secp256k1
 
 /** Rescale a jacobian point by b which must be non-zero. Constant-time. */
 static void secp256k1_gej_rescale(secp256k1_gej_t *r, const secp256k1_fe_t *b);
+
+#ifdef USE_COZ
+/** Set r equal to the double of a, and ra equal to a, such that r is co-z with ra. rzr
+ *  returns the ratio ra->z:a->z. */
+static void secp256k1_coz_dblu_var(secp256k1_coz_t *r, secp256k1_gej_t *ra, const secp256k1_gej_t *a, secp256k1_fe_t *rzr);
+
+/** Set r equal to the sum of ra and b. ra is initially co-z with b and finally co-z with r. rzr
+    returns the ratio r->z:b->z */
+static void secp256k1_coz_zaddu_var(secp256k1_gej_t *r, secp256k1_coz_t *ra, secp256k1_fe_t *rzr, const secp256k1_gej_t *b);
+#endif
 
 #endif
