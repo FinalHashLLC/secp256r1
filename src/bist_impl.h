@@ -1297,7 +1297,7 @@ static const uint16_t secp256k1_ecdsa_bist_off[SECP256K1_ECDSA_VERIFY_BIST_COUNT
  *  solving a minimum set cover on branch coverage data collected
  *  from several different build configurations.
  */
-const unsigned char secp256k1_ecdsa_sign_bist_data[SECP256K1_ECDSA_SIGN_BIST_COUNT * 64] = {
+static const unsigned char secp256k1_ecdsa_sign_bist_data[SECP256K1_ECDSA_SIGN_BIST_COUNT * 64] = {
   0xaa, 0x4b, 0xd7, 0xed, 0x25, 0xd9, 0x9f, 0x0b, 0xc8, 0x7a, 0xbf, 0x9c, 0xba,
   0x40, 0xc3, 0xa4, 0xc0, 0x8d, 0xc0, 0x51, 0x91, 0x70, 0xb3, 0x7a, 0xf3, 0xa5,
   0xb2, 0x93, 0x2f, 0xc4, 0xf6, 0xff, 0xe9, 0x9b, 0x73, 0x05, 0x51, 0x12, 0xac,
@@ -1740,7 +1740,7 @@ static void secp256k1_load_bist(unsigned char *msg, unsigned char *pubkey, int *
 /** Built-in self-tests for ECDSA verification.
  *  Tests a large number of valid signatures and corrupted signatures.
  */
-void secp256k1_ecdsa_verify_bist(void) {
+static void secp256k1_ecdsa_verify_bist(void) {
     int i;
     int slen;
     int plen;
@@ -1796,7 +1796,7 @@ void secp256k1_ecdsa_verify_bist(void) {
  *  to avoid missing errors that self-cancel.  To reduce memory the parity
  *  of the sixty-four test pubkeys is checked instead of the values.
  */
-void secp256k1_pubkey_bist(void) {
+static void secp256k1_pubkey_bist(void) {
     int off, i, j;
     int pubkeylen;
     /* XOR of all 64 tested values. */
@@ -1854,7 +1854,7 @@ void secp256k1_pubkey_bist(void) {
  *  Attempts signing with each of the vectors in secp256k1_ecdsa_sign_bist_data
  *  and compares the result with a parity check value.
  */
-void secp256k1_ecdsa_sign_bist(void) {
+static void secp256k1_ecdsa_sign_bist(void) {
     int i;
     /* XOR target */
     unsigned char acc[72] = {
